@@ -44,8 +44,10 @@ export default function Receipt({ order, onClose }) {
             <Image src="/logo.png" alt="Cakexplode" width={64} height={64}
               style={{ borderRadius: "50%", border: "3px solid rgba(255,255,255,0.4)", objectFit: "cover" }} />
           </div>
-          <h2 style={{ fontFamily: "Playfair Display, serif", fontSize: 22, marginBottom: 2 }}>Order Confirmed!</h2>
-          <p style={{ opacity: 0.9, fontSize: 12, letterSpacing: "0.08em" }}>AN EXPLOSION OF SWEETNESS</p>
+          <h2 style={{ fontFamily: "Playfair Display, serif", fontSize: 22, marginBottom: 8 }}>Order Confirmed!</h2>
+          <div style={{ background: "rgba(255,255,255,0.2)", borderRadius: 10, padding: "10px 14px", margin: "0 0 4px", fontSize: 13, lineHeight: 1.6 }}>
+            📲 Please share this order confirmation receipt and advance payment receipt to our WhatsApp number <strong>{BUSINESS.whatsapp}</strong>
+          </div>
         </div>
 
         {/* Body */}
@@ -95,8 +97,8 @@ export default function Receipt({ order, onClose }) {
               <div>
                 <span style={{ color: "#7a5c4a" }}>Payment: </span>
                 <span style={{
-                  background: order.payment === "Advance" ? "#e8f2ec" : "#fef3e2",
-                  color: order.payment === "Advance" ? "#4a7c59" : "#c9830a",
+                  background: "#e8f2ec",
+                  color: "#4a7c59",
                   padding: "1px 8px", borderRadius: 6, fontWeight: 600,
                 }}>{order.payment}</span>
               </div>

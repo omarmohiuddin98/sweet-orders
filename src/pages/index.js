@@ -11,7 +11,7 @@ const INITIAL = {
   name: "", phone: "", address: "",
   productIndex: 0,
   deliveryDate: "", deliveryTime: "",
-  payment: "Advance", notes: "",
+  notes: "",
 };
 
 export default function OrderPage() {
@@ -53,7 +53,7 @@ export default function OrderPage() {
         price: Number(selectedProduct.price),
         deliveryDate: form.deliveryDate,
         deliveryTime: form.deliveryTime,
-        payment: form.payment,
+        payment: "Advance (Bank Transfer)",
         deliveryCharges: true,
         notes: form.notes,
         orderId: genOrderId(),
@@ -199,10 +199,16 @@ export default function OrderPage() {
           {/* Payment Type */}
           <div className="form-group">
             <label>Payment Type</label>
-            <select value={form.payment} onChange={(e) => set("payment", e.target.value)}>
-              <option>Advance</option>
-              <option>COD</option>
-            </select>
+            <div style={{
+              padding: "10px 14px", border: "1.5px solid var(--border)",
+              borderRadius: 10, background: "#e8f2ec", fontSize: 14,
+              fontWeight: 600, color: "#4a7c59",
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+            }}>
+              <span>Bank Transfer (Advance)</span>
+              <span style={{ fontSize: 11, background: "#c8e6d0", color: "#2e6b42",
+                padding: "2px 8px", borderRadius: 6, fontWeight: 500 }}>Only</span>
+            </div>
           </div>
 
           {/* Delivery Charges Notice */}

@@ -18,7 +18,7 @@ export const BUSINESS = {
   whatsapp: "03300254290",
   whatsappUrl: "https://wa.me/923300254290",
   bankName: "HBL Bank",
-  accountTitle: "Cakexplode",
+  accountTitle: "Fareeha Zahid",
   accountNumber: "53957000131861",
   iban: "PK04HABB0000005000047702",
   raastId: "03362040311",
