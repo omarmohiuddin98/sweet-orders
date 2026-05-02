@@ -1,42 +1,40 @@
-// src/pages/index.js
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import Image from "next/image";
 import Nav from "@/components/Nav";
 import Receipt from "@/components/Receipt";
-import { PRODUCTS, BUSINESS, genOrderId } from "@/lib/constants";
-import { createOrder } from "@/lib/orders";
+import { BUSINESS, DEFAULT_PRODUCTS, genOrderId } from "@/lib/constants";
+import { createOrder, getProducts } from "@/lib/orders";
+
+// ── The form state lives OUTSIDE the component tree so re-renders
+//    never unmount/remount the inputs (this fixes the "kicked out" bug)
+const INITIAL = {
+  name: "", phone: "", address: "",
+  productIndex: 0,
+  deliveryDate: "", deliveryTime: "",
+  payment: "Advance", deliveryCharges: false, notes: "",
+};
 
 export default function OrderPage() {
-  const [form, setForm] = useState({
-    name: "",
-    phone: "",
-    address: "",
-    product: PRODUCTS[0].name,
-    price: PRODUCTS[0].price,
-    deliveryDate: "",
-    deliveryTime: "",
-    payment: "Advance",
-    deliveryCharges: false,
-    notes: "",
-  });
+  const [products, setProducts] = useState(DEFAULT_PRODUCTS);
+  const [form, setForm] = useState(INITIAL);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [receipt, setReceipt] = useState(null);
 
-  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+  useEffect(() => {
+    getProducts().then(setProducts).catch(() => {});
+  }, []);
 
-  const onProductChange = (e) => {
-    const p = PRODUCTS.find((x) => x.name === e.target.value);
-    set("product", e.target.value);
-    if (p && p.price > 0) set("price", p.price);
-    else set("price", "");
-  };
+  // Stable setter — never recreated, so inputs don't re-mount
+  const set = useCallback((k, v) => setForm((f) => ({ ...f, [k]: v })), []);
+
+  const selectedProduct = products[form.productIndex] || products[0] || { name: "", price: 0 };
 
   const validate = () => {
     const e = {};
     if (!form.name.trim()) e.name = "Required";
     if (!form.phone.trim()) e.phone = "Required";
     if (!form.address.trim()) e.address = "Required";
-    if (!form.price || Number(form.price) <= 0) e.price = "Enter a valid price";
     if (!form.deliveryDate) e.deliveryDate = "Required";
     if (!form.deliveryTime) e.deliveryTime = "Required";
     setErrors(e);
@@ -48,20 +46,23 @@ export default function OrderPage() {
     setSubmitting(true);
     try {
       const order = {
-        ...form,
-        price: Number(form.price),
+        name: form.name,
+        phone: form.phone,
+        address: form.address,
+        product: selectedProduct.name,
+        price: Number(selectedProduct.price),
+        deliveryDate: form.deliveryDate,
+        deliveryTime: form.deliveryTime,
+        payment: form.payment,
+        deliveryCharges: form.deliveryCharges,
+        notes: form.notes,
         orderId: genOrderId(),
         status: "New",
         createdAt: new Date().toISOString(),
       };
       await createOrder(order);
       setReceipt(order);
-      setForm({
-        name: "", phone: "", address: "",
-        product: PRODUCTS[0].name, price: PRODUCTS[0].price,
-        deliveryDate: "", deliveryTime: "",
-        payment: "Advance", deliveryCharges: false, notes: "",
-      });
+      setForm(INITIAL);
     } catch (err) {
       console.error(err);
       alert("Something went wrong. Please try again.");
@@ -70,24 +71,22 @@ export default function OrderPage() {
     }
   };
 
-  const Field = ({ k, label, children }) => (
-    <div className="form-group">
-      <label>{label}</label>
-      {children}
-      {errors[k] && <p style={{ color: "#c0392b", fontSize: 12, marginTop: 4 }}>{errors[k]}</p>}
-    </div>
-  );
-
   return (
     <div style={{ minHeight: "100vh", background: "var(--cream)" }}>
       <Nav />
 
-      <div style={{ maxWidth: 600, margin: "0 auto", padding: "0 16px 48px" }}>
+      <div style={{ maxWidth: 600, margin: "0 auto", padding: "0 16px 56px" }}>
         {/* Hero */}
-        <div style={{ textAlign: "center", padding: "48px 0 32px" }}>
-          <div style={{ fontSize: 48, marginBottom: 10 }}>🎂</div>
-          <h1 style={{ fontSize: 34, color: "var(--brown)", marginBottom: 10 }}>Sweet Orders</h1>
-          <p style={{ color: "var(--text-muted)", fontSize: 15, lineHeight: 1.7 }}>
+        <div style={{ textAlign: "center", padding: "40px 0 28px" }}>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}>
+            <Image src="/logo.png" alt="Cakexplode" width={96} height={96}
+              style={{ borderRadius: "50%", objectFit: "cover", border: "4px solid #f5e6e6", boxShadow: "0 8px 24px rgba(201,123,123,.2)" }} />
+          </div>
+          <h1 style={{ fontSize: 34, color: "var(--brown)", marginBottom: 6 }}>Cakexplode</h1>
+          <p style={{ color: "#c97b7b", fontSize: 12, letterSpacing: "0.12em", fontWeight: 600, marginBottom: 10 }}>
+            AN EXPLOSION OF SWEETNESS
+          </p>
+          <p style={{ color: "var(--text-muted)", fontSize: 14, lineHeight: 1.7 }}>
             Handcrafted cakes delivered to your door.<br />
             Fill in your details and we'll confirm shortly.
           </p>
@@ -96,54 +95,86 @@ export default function OrderPage() {
         <div className="card" style={{ borderRadius: 20, boxShadow: "0 8px 40px rgba(140,80,50,.08)" }}>
           <h2 style={{ fontSize: 20, color: "var(--brown)", marginBottom: 22 }}>Place Your Order</h2>
 
+          {/* Name + Phone */}
           <div className="form-row">
-            <Field k="name" label="Customer Name">
+            <div className="form-group">
+              <label>Customer Name</label>
               <input
                 value={form.name}
                 onChange={(e) => set("name", e.target.value)}
                 placeholder="Your full name"
                 style={errors.name ? { borderColor: "#c0392b" } : {}}
               />
-            </Field>
-            <Field k="phone" label="Phone / WhatsApp">
+              {errors.name && <p style={{ color: "#c0392b", fontSize: 12, marginTop: 4 }}>{errors.name}</p>}
+            </div>
+            <div className="form-group">
+              <label>Phone / WhatsApp</label>
               <input
                 value={form.phone}
                 onChange={(e) => set("phone", e.target.value)}
                 placeholder="03XX-XXXXXXX"
                 style={errors.phone ? { borderColor: "#c0392b" } : {}}
               />
-            </Field>
+              {errors.phone && <p style={{ color: "#c0392b", fontSize: 12, marginTop: 4 }}>{errors.phone}</p>}
+            </div>
           </div>
 
-          <Field k="address" label="Delivery Address">
+          {/* Address */}
+          <div className="form-group">
+            <label>Delivery Address</label>
             <input
               value={form.address}
               onChange={(e) => set("address", e.target.value)}
               placeholder="Street, Block, City"
               style={errors.address ? { borderColor: "#c0392b" } : {}}
             />
-          </Field>
+            {errors.address && <p style={{ color: "#c0392b", fontSize: 12, marginTop: 4 }}>{errors.address}</p>}
+          </div>
 
-          <Field k="product" label="Select Product">
-            <select value={form.product} onChange={onProductChange}>
-              {PRODUCTS.map((p) => (
-                <option key={p.name} value={p.name}>{p.name}</option>
+          {/* Product */}
+          <div className="form-group">
+            <label>Select Product</label>
+            <select
+              value={form.productIndex}
+              onChange={(e) => set("productIndex", Number(e.target.value))}
+            >
+              {products.map((p, i) => (
+                <option key={i} value={i}>{p.name}</option>
               ))}
             </select>
-          </Field>
+          </div>
 
-          <Field k="price" label="Price (Rs.)">
-            <input
-              type="number"
-              value={form.price}
-              onChange={(e) => set("price", e.target.value)}
-              placeholder="Enter price"
-              style={errors.price ? { borderColor: "#c0392b" } : {}}
-            />
-          </Field>
+          {/* Price — read only */}
+          <div className="form-group">
+            <label>Price (Rs.)</label>
+            <div style={{
+              padding: "10px 14px",
+              border: "1.5px solid var(--border)",
+              borderRadius: 10,
+              background: "#fdf8f5",
+              fontSize: 14,
+              fontWeight: 600,
+              color: selectedProduct.price > 0 ? "#c97b7b" : "var(--text-muted)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}>
+              <span>
+                {selectedProduct.price > 0
+                  ? `Rs. ${Number(selectedProduct.price).toLocaleString()}`
+                  : "Price will be confirmed by team"}
+              </span>
+              <span style={{
+                fontSize: 11, background: "#f0e4cc", color: "#c9830a",
+                padding: "2px 8px", borderRadius: 6, fontWeight: 500,
+              }}>Auto</span>
+            </div>
+          </div>
 
+          {/* Date + Time */}
           <div className="form-row">
-            <Field k="deliveryDate" label="Delivery Date">
+            <div className="form-group">
+              <label>Delivery Date</label>
               <input
                 type="date"
                 value={form.deliveryDate}
@@ -151,24 +182,29 @@ export default function OrderPage() {
                 min={new Date().toISOString().split("T")[0]}
                 style={errors.deliveryDate ? { borderColor: "#c0392b" } : {}}
               />
-            </Field>
-            <Field k="deliveryTime" label="Delivery Time">
+              {errors.deliveryDate && <p style={{ color: "#c0392b", fontSize: 12, marginTop: 4 }}>{errors.deliveryDate}</p>}
+            </div>
+            <div className="form-group">
+              <label>Delivery Time</label>
               <input
                 type="time"
                 value={form.deliveryTime}
                 onChange={(e) => set("deliveryTime", e.target.value)}
                 style={errors.deliveryTime ? { borderColor: "#c0392b" } : {}}
               />
-            </Field>
+              {errors.deliveryTime && <p style={{ color: "#c0392b", fontSize: 12, marginTop: 4 }}>{errors.deliveryTime}</p>}
+            </div>
           </div>
 
+          {/* Payment + Delivery Charges */}
           <div className="form-row">
-            <Field k="payment" label="Payment Type">
+            <div className="form-group">
+              <label>Payment Type</label>
               <select value={form.payment} onChange={(e) => set("payment", e.target.value)}>
                 <option>Advance</option>
                 <option>COD</option>
               </select>
-            </Field>
+            </div>
             <div className="form-group" style={{ display: "flex", alignItems: "flex-end", paddingBottom: 4 }}>
               <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", marginBottom: 0 }}>
                 <input
@@ -177,19 +213,21 @@ export default function OrderPage() {
                   onChange={(e) => set("deliveryCharges", e.target.checked)}
                   style={{ width: 18, height: 18, cursor: "pointer" }}
                 />
-                <span style={{ fontSize: 13, color: "var(--brown)" }}>Delivery charges paid by customer</span>
+                <span style={{ fontSize: 13, color: "var(--brown)" }}>Delivery charges paid by me</span>
               </label>
             </div>
           </div>
 
-          <Field k="notes" label="Notes (optional)">
+          {/* Notes */}
+          <div className="form-group">
+            <label>Notes (optional)</label>
             <textarea
               value={form.notes}
               onChange={(e) => set("notes", e.target.value)}
               rows={3}
               placeholder="Flavor preferences, design details, allergies..."
             />
-          </Field>
+          </div>
 
           <button
             className="btn-primary"
@@ -201,9 +239,18 @@ export default function OrderPage() {
           </button>
         </div>
 
-        <div style={{ textAlign: "center", marginTop: 24, color: "var(--text-muted)", fontSize: 13, lineHeight: 2 }}>
-          <p>📱 Instagram: <strong>{BUSINESS.instagram}</strong></p>
-          <p>📞 WhatsApp: <strong>{BUSINESS.whatsapp}</strong></p>
+        {/* Footer */}
+        <div style={{ textAlign: "center", marginTop: 28, color: "var(--text-muted)", fontSize: 13, lineHeight: 2.2 }}>
+          <div style={{ display: "flex", justifyContent: "center", gap: 24, flexWrap: "wrap" }}>
+            <a href={BUSINESS.instagramUrl} target="_blank" rel="noreferrer"
+              style={{ color: "var(--rose)", textDecoration: "none", fontWeight: 600 }}>
+              📸 {BUSINESS.instagram}
+            </a>
+            <a href={BUSINESS.whatsappUrl} target="_blank" rel="noreferrer"
+              style={{ color: "#25d366", textDecoration: "none", fontWeight: 600 }}>
+              💬 {BUSINESS.whatsapp}
+            </a>
+          </div>
         </div>
       </div>
 

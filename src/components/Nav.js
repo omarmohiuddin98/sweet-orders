@@ -1,6 +1,6 @@
-// src/components/Nav.js
 import Link from "next/link";
 import { useRouter } from "next/router";
+import Image from "next/image";
 
 export default function Nav() {
   const router = useRouter();
@@ -21,45 +21,34 @@ export default function Nav() {
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        height: 54,
+        height: 58,
       }}>
-        <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 20 }}>🎂</span>
-          <span style={{ fontFamily: "Playfair Display, serif", fontSize: 17, fontWeight: 600, color: "var(--brown)" }}>
-            Sweet Orders
-          </span>
+        <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 10 }}>
+          <Image src="/logo.png" alt="Cakexplode" width={42} height={42} style={{ borderRadius: "50%", objectFit: "cover" }} />
+          <div>
+            <div style={{ fontFamily: "Playfair Display, serif", fontSize: 16, fontWeight: 700, color: "var(--brown)", lineHeight: 1.2 }}>Cakexplode</div>
+            <div style={{ fontSize: 10, color: "var(--text-muted)", letterSpacing: "0.05em" }}>AN EXPLOSION OF SWEETNESS</div>
+          </div>
         </Link>
 
         <div style={{ display: "flex", gap: 6 }}>
           <Link href="/" style={{ textDecoration: "none" }}>
             <button style={{
-              padding: "7px 16px",
-              borderRadius: 8,
-              border: "1.5px solid",
+              padding: "7px 16px", borderRadius: 8, border: "1.5px solid",
               borderColor: !isAdmin ? "var(--rose)" : "transparent",
               background: !isAdmin ? "var(--rose-light)" : "transparent",
               color: !isAdmin ? "var(--rose)" : "var(--text-muted)",
-              fontWeight: 500,
-              fontSize: 13,
-              cursor: "pointer",
-            }}>
-              Order
-            </button>
+              fontWeight: 500, fontSize: 13, cursor: "pointer",
+            }}>Order</button>
           </Link>
           <Link href="/admin" style={{ textDecoration: "none" }}>
             <button style={{
-              padding: "7px 16px",
-              borderRadius: 8,
-              border: "1.5px solid",
+              padding: "7px 16px", borderRadius: 8, border: "1.5px solid",
               borderColor: isAdmin ? "var(--rose)" : "transparent",
               background: isAdmin ? "var(--rose-light)" : "transparent",
               color: isAdmin ? "var(--rose)" : "var(--text-muted)",
-              fontWeight: 500,
-              fontSize: 13,
-              cursor: "pointer",
-            }}>
-              Team Dashboard
-            </button>
+              fontWeight: 500, fontSize: 13, cursor: "pointer",
+            }}>Team Dashboard</button>
           </Link>
         </div>
       </div>
